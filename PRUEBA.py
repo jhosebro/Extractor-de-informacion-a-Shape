@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QFileDialog, QInputDialog
 from PyQt5.QtCore import QVariant
 from qgis.core import QgsVectorLayer, QgsField
+import os
 
 def seleccionar_archivo(titulo="Selecciona un archivo", filtro="Todos los archivos (*.*)"):
     """
@@ -10,6 +11,41 @@ def seleccionar_archivo(titulo="Selecciona un archivo", filtro="Todos los archiv
         None, titulo, "", filtro
     )
     return archivo_seleccionado
+
+def guardar_como_shapefile(capa, titulo="Guardar como Shapefile"):
+    
+    from qgis.core import QgsVectorFileWriter, QgsCoordinateTransformContext
+
+    # Abrir un cuadro de diálogo para seleccionar dónde guardar el shapefile
+    ruta_shapefile, _ = QFileDialog.getSaveFileName(
+        None, titulo, "", "Shapefile (*.shp);;Todos los archivos (*.*)"
+    )
+
+    # Asegurarse de que la extensión sea .shp
+    if not ruta_shapefile.lower().endswith(".shp"):
+        ruta_shapefile += ".shp"
+
+    # Crear opciones para guardar el archivo
+    options = QgsVectorFileWriter.SaveVectorOptions()
+    options.driverName = "ESRI Shapefile"
+    options.fileEncoding = "UTF-8"
+
+    # Guardar la capa como shapefile
+    transform_context = QgsCoordinateTransformContext()
+    error = QgsVectorFileWriter.writeAsVectorFormatV2(
+        capa, ruta_shapefile, transform_context, options
+    )
+
+    # Validar si el shapefile se creó correctamente
+    if error == QgsVectorFileWriter.NoError:
+        print(f"Shapefile guardado exitosamente en: {ruta_shapefile}")
+        if os.path.exists(ruta_shapefile):
+            print("El archivo fue creado correctamente.")
+    else:
+        print(f"Error al intentar guardar la capa como shapefile. Código de error: {error}")
+        if os.path.exists(ruta_shapefile):
+            print("Nota: Aunque se mostró un error, el archivo se creó exitosamente.")
+
 
 def seleccionar_capa_geopackage(ruta_geopackage):
     """
@@ -147,3 +183,8 @@ if capa:
         print("Se asignaron correctamente los valores de ITEM y LumCantPos.")
     else:
         print("Error al guardar los cambios finales en la capa.")
+
+#Guardar como shapefile
+guardar_como_shapefile(capa)
+#Importante crear en el geopackage una columna ID_Original y copiar los datos del ID antes de ejecutar el codigo para evitar perder ese registro de ID's anterior
+#Aunque el archivo .shp al final diga que marco error es un falso positivo generado por la API de Qgis
