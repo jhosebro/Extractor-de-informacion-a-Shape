@@ -108,3 +108,29 @@ if capa:
                 print(f"Error: El campo '{nombre_campo}' no existía, pero no se pudo crear.")
         else:
             print(f"El campo '{nombre_campo}' ya existe en la capa.")
+            
+#Inicializacion de edicion dentro de la capa
+if not capa.isEditable():
+    capa.startEditing()
+            
+#Comprobacion de ID's y asignacion de valores restantes
+ids_existentes = [feature['ID'] for feature in capa.getFeatures() if feature['ID'] is not None]
+#Extraccion del ID mayor para creacion de ID's
+max_id = max(ids_existentes, default=0)
+ids_agregados = 0 #Contador de ID's agregados con la funcion
+
+#Ciclo para agregar los ID's que tienen informacion pero no tienen ID
+for feature in capa.getFeatures():
+    if feature['ID'] is None or feature['ID'] == NULL:
+        max_id += 1
+        feature['ID'] = max_id
+        capa.updateFeature(feature)
+        ids_agregados += 1 #Incrementa el contador de los ID's agregados
+
+#Confirmamos los cambios
+if capa.commitChanges():
+    print(f"Se agregaron {ids_agregados} nuevos ID(s) a la capa")
+else:
+    print("Error al intentar guardar los cambios en la capa.")
+
+
